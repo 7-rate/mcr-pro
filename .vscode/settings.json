@@ -1,0 +1,15 @@
+{
+  "python.formatting.provider": "black",
+  "[c][cpp][h][ino]": {
+    "editor.formatOnType": true,
+    "editor.formatOnSave": true
+  },
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.python"
+  },
+  "[css][json][jsonc][html][markdown][yaml]": {
+    "editor.formatOnSave": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+}

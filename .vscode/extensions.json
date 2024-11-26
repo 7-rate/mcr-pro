@@ -1,0 +1,12 @@
+{
+    // See http://go.microsoft.com/fwlink/?LinkId=827846
+    // for the documentation about the extensions.json format
+    "recommendations": [
+        "mhutchie.git-graph",
+        "platformio.platformio-ide",
+        "mhutchie.git-graph"
+    ],
+    "unwantedRecommendations": [
+        "ms-vscode.cpptools-extension-pack"
+    ]
+}

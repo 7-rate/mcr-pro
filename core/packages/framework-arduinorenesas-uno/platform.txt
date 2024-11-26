@@ -1,0 +1,131 @@
+#
+# For more info:
+# https://github.com/arduino/Arduino/wiki/Arduino-IDE-1.5---3rd-party-Hardware-specification
+
+name=Arduino Renesas UNO R4 Boards
+version=1.0.5
+
+# Compile variables
+# ------------------------
+
+compiler.warning_flags=-w
+compiler.warning_flags.none=-w
+compiler.warning_flags.default=
+compiler.warning_flags.more=-Wall
+compiler.warning_flags.all=-Wall -Wextra
+
+compiler.path={build.compiler_path}
+compiler.c.cmd={build.crossprefix}gcc
+compiler.c.flags=-c {compiler.warning_flags} -Os -g3 -nostdlib {build.defines} -MMD -std=gnu11 -mcpu={build.mcu} {build.float-abi} {build.fpu} -fmessage-length=0 -fsigned-char -ffunction-sections -fdata-sections -fmessage-length=0 -fno-builtin
+compiler.c.elf.cmd={build.crossprefix}g++
+compiler.c.elf.flags=-Wl,--gc-sections --specs=nosys.specs {compiler.warning_flags} -mcpu={build.mcu} {build.float-abi} {build.fpu}
+compiler.S.cmd={build.crossprefix}g++
+compiler.S.flags=-c -g -x assembler-with-cpp -Os -mcpu={build.mcu} {build.float-abi} {build.fpu} -fsigned-char -ffunction-sections -fdata-sections
+compiler.cpp.cmd={build.crossprefix}g++
+compiler.cpp.flags=-c {compiler.warning_flags} -Os -g3 -fno-use-cxa-atexit -fno-rtti -fno-exceptions -MMD -nostdlib {build.defines} -MMD -std=gnu++17 -mcpu={build.mcu} {build.float-abi} {build.fpu} -fsigned-char -ffunction-sections -fdata-sections -fmessage-length=0 -fno-builtin
+compiler.ar.cmd={build.crossprefix}ar
+compiler.ar.flags=rcs
+compiler.ar.extra_flags=
+compiler.objcopy.cmd=
+compiler.objcopy.eep.flags=
+compiler.elf2hex.bin.flags=-O binary -j .text -j .data
+compiler.elf2hex.hex.flags=-O ihex -j .text -j .data
+compiler.elf2hex.extra_flags=
+compiler.elf2hex.cmd={build.crossprefix}objcopy
+compiler.ldflags=
+compiler.libraries.ldflags=
+compiler.size.cmd={build.crossprefix}size
+compiler.define=-DARDUINO=
+# this can be overriden in boards.txt
+build.extra_flags=
+build.extra_ldflags=
+
+# These can be overridden in platform.local.txt
+compiler.c.extra_flags=
+compiler.c.elf.extra_flags=
+compiler.S.extra_flags=
+compiler.cpp.extra_flags=
+compiler.ar.extra_flags=
+compiler.objcopy.eep.extra_flags=
+compiler.elf2hex.extra_flags=
+
+tinyusb.includes="-I{build.core.path}/tinyusb"
+
+# USB Flags
+# ---------
+build.usb_flags=
+
+# Default usb manufacturer will be replaced at compile time using
+# numeric vendor ID if available or by board's specific value.
+#build.usb_manufacturer="Unknown"
+
+
+# FSP compile patterns
+# -----------------------
+
+## Compile c files
+recipe.c.o.pattern="{compiler.path}{compiler.c.cmd}" {compiler.c.flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_ARCH_RENESAS -DARDUINO_FSP -D_XOPEN_SOURCE=700 {compiler.fsp.cflags} {compiler.tinyusb.cflags}  {build.extra_flags} {tinyusb.includes} "-I{build.core.path}/api/deprecated" "-I{build.core.path}/api/deprecated-avr-comp" {includes} "-iprefix{runtime.platform.path}" "@{compiler.fsp.includes}" -o "{object_file}" "{source_file}"
+
+## Compile c++ files
+recipe.cpp.o.pattern="{compiler.path}{compiler.cpp.cmd}" {compiler.cpp.flags} -DARDUINO={runtime.ide.version} "-DPROJECT_NAME="{build.path}/{build.project_name}"" -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_ARCH_RENESAS -DARDUINO_FSP -D_XOPEN_SOURCE=700 {compiler.fsp.cxxflags} {compiler.tinyusb.cxxflags} {build.extra_flags} {tinyusb.includes} "-I{build.core.path}/api/deprecated" "-I{build.core.path}/api/deprecated-avr-comp" {includes} "-iprefix{runtime.platform.path}" "@{compiler.fsp.includes}" "{source_file}" -o "{object_file}"
+
+## Compile asm files
+recipe.S.o.pattern="{compiler.path}{compiler.S.cmd}" {compiler.S.flags} -DARDUINO={runtime.ide.version} -DARDUINO_{build.board} -DARDUINO_ARCH_{build.arch} -DARDUINO_ARCH_RENESAS -DARDUINO_FSP -D_XOPEN_SOURCE=700 {includes} {build.extra_flags} {build.extra_ldflags} {compiler.cpp.extra_flags} "-I{build.core.path}/api/deprecated" "-I{build.core.path}/api/deprecated-avr-comp" {includes} "-iprefix{runtime.platform.path}" "@{compiler.fsp.includes}" "{source_file}" -o "{object_file}"
+
+## Create archives
+recipe.ar.pattern="{compiler.path}{compiler.ar.cmd}" {compiler.ar.flags} {compiler.ar.extra_flags} "{archive_file_path}" "{object_file}"
+
+## Combine gc-sections, archives, and objects
+recipe.c.combine.pattern="{compiler.path}{compiler.c.elf.cmd}" {compiler.c.elf.flags} {build.extra_flags} -o "{build.path}/{build.project_name}.elf" "-L{build.path}" "-L{build.variant.path}" "-T{build.variant.path}/fsp.ld" {object_files} -Wl,--whole-archive -Wl,--start-group {compiler.fsp} "{build.path}/{archive_file}" -Wl,--no-whole-archive {compiler.fsp.extra_ldflags} {compiler.libraries.ldflags} -Wl,--end-group "-Wl,-Map,{build.path}/{build.project_name}.map"
+
+## Create output (bin file)
+recipe.objcopy.bin.pattern="{compiler.path}{compiler.elf2hex.cmd}" {compiler.elf2hex.bin.flags} {compiler.elf2hex.extra_flags} "{build.path}/{build.project_name}.elf" "{build.path}/{build.project_name}.bin"
+
+## Create output (hex file)
+recipe.objcopy.hex.pattern="{compiler.path}{compiler.elf2hex.cmd}" {compiler.elf2hex.hex.flags} {compiler.elf2hex.extra_flags} "{build.path}/{build.project_name}.elf" "{build.path}/{build.project_name}.hex"
+
+## Compute size
+recipe.size.pattern="{compiler.path}{compiler.size.cmd}" -A "{build.path}/{build.project_name}.elf"
+recipe.size.regex.data=^(?:\.data|\.bss)\s+([0-9]+).*
+recipe.size.regex=^(?:\.data|\.text|\.rodata)\S*?\s+([0-9]+).*
+
+## Save hex
+recipe.output.tmp_file={build.project_name}.bin
+recipe.output.save_file={build.project_name}.{build.variant}.bin
+
+# Uploader tools
+# ---------------------
+
+tools.dfu-util.path={runtime.tools.dfu-util-0.11.0-arduino5.path}
+tools.dfu-util.cmd=dfu-util
+tools.dfu-util.upload.params.verbose=-d
+tools.dfu-util.upload.params.quiet=
+# tools.dfu-util.upload.pattern="{path}/{cmd}" --device {upload.vid}:{pid.0},:{upload.pid} -D "{build.path}/{build.project_name}.bin" -a{upload.interface} -R
+# -Q introduced with latest dfu-util
+tools.dfu-util.upload.pattern="{path}/{cmd}" --device {upload.vid}:{pid.0},:{upload.pid} -D "{build.path}/{build.project_name}.bin" -a{upload.interface} -Q
+
+# Required discoveries and monitors
+# ---------------------------------
+pluggable_discovery.required.0=builtin:serial-discovery
+pluggable_discovery.required.1=builtin:mdns-discovery
+pluggable_discovery.required.2=builtin:dfu-discovery
+pluggable_monitor.required.serial=builtin:serial-monitor
+
+tools.bossac.path={runtime.tools.bossac-1.9.1-arduino5.path}
+tools.bossac.cmd=bossac
+tools.bossac.upload.params.verbose=-d
+tools.bossac.upload.params.quiet=
+tools.bossac.upload.pattern="{path}/{cmd}" {upload.verbose} --port={serial.port.file} -U -e -w "{build.path}/{build.project_name}.bin" -R
+
+# Debugger configuration (general options)
+# ----------------------------------------
+# EXPERIMENTAL feature:
+#  - this is alpha and may be subject to change without notice
+#debug.executable={build.path}/{build.project_name}.elf
+#debug.toolchain=gcc
+#debug.toolchain.path={runtime.tools.arm-none-eabi-gcc-7-2017q4.path}/bin/
+#debug.toolchain.prefix=arm-none-eabi-
+#debug.server=openocd
+#debug.server.openocd.path={runtime.tools.openocd-0.11.0-arduino2.path}/bin/openocd
+#debug.server.openocd.scripts_dir={runtime.tools.openocd-0.11.0-arduino2.path}/share/openocd/scripts/
+#debug.server.openocd.script={runtime.platform.path}/variants/{build.variant}/openocd.cfg
