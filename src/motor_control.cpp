@@ -168,12 +168,12 @@ void servo_control() {
         //   line_errorがtargetに近いエリアではkpを小さくする
         //   target   0----196--------1024
         //   補正    1/2    1          1
-        kp = map( abs( error ), 0, 196, kp / 2, kp );
-        kp = min( kp, prm_line_trace_P.get() );
+        // kp = map( abs( error ), 0, 196, kp / 2, kp );
+        // kp = min( kp, prm_line_trace_P.get() );
 
-        out_p = ( kp * error ) / 1024;
+        out_p = ( kp * error ) / 4096;
         out_i = ( ki * servo_ctrl_line_error_sum ) / 1024;
-        out_d = ( kd * line_error_diff ) / 1024;
+        out_d = ( kd * line_error_diff ) / 512;
 
         pwm = out_p + out_i + out_d;
         servo_ctrl_line_error_old = error;

@@ -173,6 +173,13 @@ static void centrifugal_force_update() {
     interrupts();
 }
 
+static void line_analog_update() {
+    noInterrupts();
+    line_left_raw = analogRead( PIN_LINE_ANALOG_LEFT );
+    line_right_raw = analogRead( PIN_LINE_ANALOG_RIGHT );
+    interrupts();
+}
+
 /***********************************/
 /* Global functions                */
 /***********************************/
@@ -183,45 +190,40 @@ static void centrifugal_force_update() {
  * 詳細：センサ基板がセンターからどの程度ずれているかを-1024~1023で返す
  */
 void line_error_update() {
-    line_left_raw = analogRead( PIN_LINE_ANALOG_LEFT );
-    line_right_raw = analogRead( PIN_LINE_ANALOG_RIGHT );
-
-    noInterrupts();
     line_left = map( line_left_raw, prm_line_trace_left_B.get(), prm_line_trace_left_W.get(), 800, 0 );
     line_right = map( line_right_raw, prm_line_trace_right_B.get(), prm_line_trace_right_W.get(), 800, 0 );
     line_left = constrain( line_left, 0, 800 );
     line_right = constrain( line_right, 0, 800 );
 
-    line_error = line_left - line_right;
+    line_error = line_right - line_left;
 
     // デジタルセンサが反応していたら上書きする
     switch ( line_digital ) {
     // 右に切れている
     case 0x14:
-        line_error = -800;
+        line_error = 800;
         break;
     case 0x0C:
-        line_error = -900;
+        line_error = 900;
         break;
     case 0x08:
-        line_error = -1024;
+        line_error = 1024;
         break;
 
     // 左に切れている
     case 0x12:
-        line_error = 800;
+        line_error = -800;
         break;
     case 0x03:
-        line_error = 900;
+        line_error = -900;
         break;
     case 0x01:
-        line_error = 1023;
+        line_error = -1023;
         break;
 
     default:
         break;
     }
-    interrupts();
 }
 
 /*
@@ -231,11 +233,9 @@ void line_error_update() {
  * 詳細：ステアリング角度を更新する
  */
 void angle_update() {
-    noInterrupts();
     s2 servo_pulse_cnt = (s2)GPT7_CNT;
     steer_angle = ( (s4)servo_pulse_cnt * 3600 ) / ( ANGLE_PULSE * CAR_STEER_GEAR_RATIO / 10 );
     steer_angle = -steer_angle;
-    interrupts();
 }
 
 /*
@@ -335,6 +335,7 @@ void sensors_init() {
  */
 void sensors_update() {
     digital_sensor_update();
+    line_analog_update();
     slope_update();
     battery_update();
     dip_switch_update();
