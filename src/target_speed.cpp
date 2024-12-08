@@ -22,6 +22,8 @@ typedef struct {
     s4 difficult_distance;
     // 難所種別
     s4 kind;
+    // 難所の最終目標速度
+    s4 speed_difficult;
     // 難所マーカー～難所開始までを以下の3区間に区切って制御する
     s4 distance_free_run;      // 1.空走区間
     s4 distance_slow_down;     // 2.減速区間
@@ -35,7 +37,7 @@ static u1 section_cnt;
 static enum e_run_mode run_mode_difficult;
 static distance_measure difficult_marker_distance( &distance ); // 難所読み取りからの距離計測
 static s4 speed_initial_from_marker;                            // 難所読み取り時の速度
-difficult_ctrl_t difficult_ctrl[10];                            // 難所制御パラメータ
+static difficult_ctrl_t difficult_ctrl;                         // 難所制御パラメータ
 
 static parameter* difficult_distances[] = { &prm_difficult_distance_sec0, &prm_difficult_distance_sec1, &prm_difficult_distance_sec2,
                                             &prm_difficult_distance_sec3, &prm_difficult_distance_sec4, &prm_difficult_distance_sec5,
@@ -98,15 +100,15 @@ static void difficult_target_speed_update() {
     u1 idx = section_cnt;
     s4 distance;
 
-    switch ( difficult_ctrl[idx].kind ) {
+    switch ( difficult_ctrl.kind ) {
     case CR_L:
     case CR_R: // fallthrough
-        if ( difficult_ctrl[idx].distance_free_run > difficult_marker_distance.measure() ) {
+        if ( difficult_ctrl.distance_free_run > difficult_marker_distance.measure() ) {
             // 空走区間
             speed_crossline = speed_stable;
-        } else if ( difficult_ctrl[idx].distance_slow_down > difficult_marker_distance.measure() ) {
+        } else if ( difficult_ctrl.distance_slow_down > difficult_marker_distance.measure() ) {
             // 減速区間
-            distance = difficult_marker_distance.measure() - difficult_ctrl[idx].distance_free_run;
+            distance = difficult_marker_distance.measure() - difficult_ctrl.distance_free_run;
             speed_crossline = calc_target_speed( speed_initial_from_marker, prm_max_speed_crossline.get(), distance );
         } else {
             // 安定区間
@@ -114,12 +116,12 @@ static void difficult_target_speed_update() {
         }
         break;
     case LC_L:
-        if ( difficult_ctrl[idx].distance_free_run > difficult_marker_distance.measure() ) {
+        if ( difficult_ctrl.distance_free_run > difficult_marker_distance.measure() ) {
             // 空走区間
             speed_L_lanechange = speed_stable;
-        } else if ( difficult_ctrl[idx].distance_slow_down > difficult_marker_distance.measure() ) {
+        } else if ( difficult_ctrl.distance_slow_down > difficult_marker_distance.measure() ) {
             // 減速区間
-            distance = difficult_marker_distance.measure() - difficult_ctrl[idx].distance_free_run;
+            distance = difficult_marker_distance.measure() - difficult_ctrl.distance_free_run;
             speed_L_lanechange = calc_target_speed( speed_initial_from_marker, prm_max_speed_L_lanechange.get(), distance );
         } else {
             // 安定区間
@@ -127,12 +129,12 @@ static void difficult_target_speed_update() {
         }
         break;
     case LC_R:
-        if ( difficult_ctrl[idx].distance_free_run > difficult_marker_distance.measure() ) {
+        if ( difficult_ctrl.distance_free_run > difficult_marker_distance.measure() ) {
             // 空走区間
             speed_R_lanechange = speed_stable;
-        } else if ( difficult_ctrl[idx].distance_slow_down > difficult_marker_distance.measure() ) {
+        } else if ( difficult_ctrl.distance_slow_down > difficult_marker_distance.measure() ) {
             // 減速区間
-            distance = difficult_marker_distance.measure() - difficult_ctrl[idx].distance_free_run;
+            distance = difficult_marker_distance.measure() - difficult_ctrl.distance_free_run;
             speed_R_lanechange = calc_target_speed( speed_initial_from_marker, prm_max_speed_R_lanechange.get(), distance );
         } else {
             // 安定区間
@@ -184,19 +186,38 @@ void start_difficult( enum e_run_mode mode ) {
         speed_initial_from_marker = speed;
         difficult_marker_distance.restart();
 
+        // 難所種別
+        difficult_ctrl.kind = difficult_kinds[idx]->get();
+
+        // 難所の最終目標速度
+        switch ( difficult_ctrl.kind ) {
+        case CR_L:
+        case CR_R: // fallthrough
+            difficult_ctrl.speed_difficult = prm_max_speed_crossline.get();
+            break;
+        case LC_L:
+            difficult_ctrl.speed_difficult = prm_max_speed_L_lanechange.get();
+            break;
+        case LC_R:
+            difficult_ctrl.speed_difficult = prm_max_speed_R_lanechange.get();
+            break;
+        default:
+            break;
+        }
+
         // マーカー～難所開始までの距離(パラメータで設定した値)
-        difficult_ctrl[idx].difficult_distance = difficult_distances[idx]->get();
+        difficult_ctrl.difficult_distance = difficult_distances[idx]->get();
 
         // 減速区間距離
-        difficult_ctrl[idx].distance_slow_down =
-            ( ( difficult_distances[idx]->get() - speed_initial_from_marker ) / DECELERATION ) * speed_initial_from_marker;
+        difficult_ctrl.distance_slow_down =
+            ( ( difficult_ctrl.speed_difficult - speed_initial_from_marker ) / DECELERATION ) * speed_initial_from_marker;
 
         // 安定区間距離(固定値)
-        difficult_ctrl[idx].distance_stable_buffer = DISTANCE_STALE_BUFFER;
+        difficult_ctrl.distance_stable_buffer = DISTANCE_STALE_BUFFER;
 
         // 空走区間距離
-        difficult_ctrl[idx].distance_free_run =
-            difficult_ctrl[idx].difficult_distance - difficult_ctrl[idx].distance_slow_down - difficult_ctrl[idx].distance_stable_buffer;
+        difficult_ctrl.distance_free_run =
+            difficult_ctrl.difficult_distance - difficult_ctrl.distance_slow_down - difficult_ctrl.distance_stable_buffer;
         break;
 
     default:
@@ -228,7 +249,7 @@ void target_speed_update() {
     speed_stable = ( speed_stable * distance_k ) / 100;
     speed_stable = ( speed_stable * temperature_k ) / 100;
 
-    // 坂道時の���標速度判断
+    // 坂道時の目標速度判断
     speed_slope = prm_max_speed_slope.get();
     speed_slope = ( speed_slope * distance_k ) / 100;
     speed_slope = ( speed_slope * temperature_k ) / 100;
