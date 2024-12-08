@@ -7,7 +7,7 @@
 #include "pin_defines.h"
 
 #define MCR_APP_DEBUG ( 1 )
-#define COMMAND_TEST_MODE ( 0 )
+#define COMMAND_TEST_MODE ( 1 )
 
 /******************************************************************/
 /* Definitions                                                    */

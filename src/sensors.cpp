@@ -173,13 +173,6 @@ static void centrifugal_force_update() {
     interrupts();
 }
 
-static void line_analog_update() {
-    noInterrupts();
-    line_left_raw = analogRead( PIN_LINE_ANALOG_LEFT );
-    line_right_raw = analogRead( PIN_LINE_ANALOG_RIGHT );
-    interrupts();
-}
-
 /***********************************/
 /* Global functions                */
 /***********************************/
@@ -190,6 +183,8 @@ static void line_analog_update() {
  * 詳細：センサ基板がセンターからどの程度ずれているかを-1024~1023で返す
  */
 void line_error_update() {
+    line_left_raw = analogRead( PIN_LINE_ANALOG_LEFT );
+    line_right_raw = analogRead( PIN_LINE_ANALOG_RIGHT );
     line_left = map( line_left_raw, prm_line_trace_left_B.get(), prm_line_trace_left_W.get(), 800, 0 );
     line_right = map( line_right_raw, prm_line_trace_right_B.get(), prm_line_trace_right_W.get(), 800, 0 );
     line_left = constrain( line_left, 0, 800 );
@@ -335,7 +330,6 @@ void sensors_init() {
  */
 void sensors_update() {
     digital_sensor_update();
-    line_analog_update();
     slope_update();
     battery_update();
     dip_switch_update();
