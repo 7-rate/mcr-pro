@@ -87,7 +87,7 @@ static void neopixel_exec() {
             neopixel[0] = CHSV( 240, 255, 63 );
             break;
         case NEOPIXEL_LED_PATTERN_DIFFICULT_ONE_SHOT:
-            neopixel[0] = CHSV( 120, 255, 63 );
+            neopixel[0] = CHSV( 120, 255, 255 );
             if ( millis() - one_shot_tmr > 500 ) {
                 neopixel_led_pattern = NEOPIXEL_LED_PATTERN_OFF;
             }
