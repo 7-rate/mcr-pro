@@ -32,8 +32,8 @@
 // Servoモーター
 #define PIN_MOTOR_SV_PWMH ( D53 )
 #define PIN_MOTOR_SV_PWML ( D52 )
-#define PIN_MOTOR_SV_PHASE ( D49 )
-#define PIN_MOTOR_SV_SR ( D48 )
+#define PIN_MOTOR_SV_PHASE ( D48 )
+#define PIN_MOTOR_SV_SR ( D49 )
 
 // ブザー
 #define PIN_BUZZER ( D72 )
