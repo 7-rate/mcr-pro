@@ -253,14 +253,8 @@ void display_sensor_view() {
     display_draw_str( 0, ROW_1, "Dig" );
     display_draw_str( COL_VALUE_R, ROW_1, "%4X", line_digital | gate << 5 );
 
-    display_draw_str( 0, ROW_2, "A(L)" );
-    display_draw_str( COL_VALUE_R, ROW_2, "%4d", line_left );
-
-    display_draw_str( 0, ROW_3, "A(R)" );
-    display_draw_str( COL_VALUE_R, ROW_3, "%4d", line_right );
-
-    display_draw_str( 0, ROW_4, "A(E)" );
-    display_draw_str( COL_VALUE_R, ROW_4, "%4d", line_error );
+    display_draw_str( 0, ROW_2, "Err" );
+    display_draw_str( COL_VALUE_R, ROW_2, "%4d", line_error );
 
     display_draw_str( 0, ROW_5, "Enc" );
     display_draw_str( COL_VALUE_R, ROW_5, "%4d", distance );
@@ -604,10 +598,13 @@ void display_sensor_calibration() {
         display_draw_str( COL_ITEM, ROW_1, "Black" );
     }
 
-    display_draw_str( COL_ITEM, ROW_2, "L" );
-    display_draw_str( COL_ITEM, ROW_3, " %4d", line_left_raw );
-    display_draw_str( COL_ITEM, ROW_4, "R" );
-    display_draw_str( COL_ITEM, ROW_5, " %4d", line_right_raw );
+    display_draw_str( COL_ITEM, ROW_2, " %4d", ar3_raw );
+    display_draw_str( COL_ITEM, ROW_3, " %4d", ar2_raw );
+    display_draw_str( COL_ITEM, ROW_4, " %4d", ar1_raw );
+    display_draw_str( COL_ITEM, ROW_5, " %4d", ac_raw );
+    display_draw_str( COL_ITEM, ROW_6, " %4d", al1_raw );
+    display_draw_str( COL_ITEM, ROW_7, " %4d", al2_raw );
+    display_draw_str( COL_ITEM, ROW_8, " %4d", al3_raw );
 
     if ( sensor_calibration_status == CALIBRATION_W ) {
         display_draw_str( COL_ITEM, ROW_11, "Next" );
@@ -634,13 +631,24 @@ void display_sensor_calibration() {
         if ( sensor_calibration_cursor == 0 ) {
             switch ( sensor_calibration_status ) {
             case CALIBRATION_W:
-                prm_line_trace_left_W = line_left_raw;
-                prm_line_trace_right_W = line_right_raw;
+                prm_line_AR3_W = ar3_raw;
+                prm_line_AR2_W = ar2_raw;
+                prm_line_AR1_W = ar1_raw;
+                prm_line_AC_W = ac_raw;
+                prm_line_AL1_W = al1_raw;
+                prm_line_AL2_W = al2_raw;
+                prm_line_AL3_W = al3_raw;
+
                 sensor_calibration_status = CALIBRATION_B;
                 break;
             case CALIBRATION_B:
-                prm_line_trace_left_B = line_left_raw;
-                prm_line_trace_right_B = line_right_raw;
+                prm_line_AR3_B = ar3_raw;
+                prm_line_AR2_B = ar2_raw;
+                prm_line_AR1_B = ar1_raw;
+                prm_line_AC_B = ac_raw;
+                prm_line_AL1_B = al1_raw;
+                prm_line_AL2_B = al2_raw;
+                prm_line_AL3_B = al3_raw;
                 sensor_calibration_status = CALIBRATION_SAVE;
                 break;
             default:

@@ -51,14 +51,22 @@
 // Sens_5:D41
 // Sens_6:D42
 // Sens_7:A3
-#define PIN_LINE_DIGITAL_CENTER ( D35 )
-#define PIN_LINE_DIGITAL_8 ( D36 )
-#define PIN_LINE_DIGITAL_4 ( D38 )
-#define PIN_LINE_ANALOG_LEFT ( D39 )
-#define PIN_LINE_DIGITAL_GATE ( D40 )
-#define PIN_LINE_ANALOG_RIGHT ( D41 )
-#define PIN_LINE_DIGITAL_2 ( D42 )
-#define PIN_LINE_DIGITAL_1 ( A3 )
+// #define PIN_LINE_DIGITAL_CENTER ( D35 )
+// #define PIN_LINE_DIGITAL_8 ( D36 )
+// #define PIN_LINE_DIGITAL_4 ( D38 )
+// #define PIN_LINE_ANALOG_LEFT ( D39 )
+// #define PIN_LINE_DIGITAL_GATE ( D40 )
+// #define PIN_LINE_ANALOG_RIGHT ( D41 )
+// #define PIN_LINE_DIGITAL_2 ( D42 )
+// #define PIN_LINE_DIGITAL_1 ( A3 )
+
+#define PIN_LINE_AR3 ( D35 )
+#define PIN_LINE_AR2 ( D36 )
+#define PIN_LINE_AR1 ( D38 )
+#define PIN_LINE_AC ( D39 )
+#define PIN_LINE_AL1 ( D40 )
+#define PIN_LINE_AL2 ( D41 )
+#define PIN_LINE_AL3 ( D42 )
 
 // 電力センサ
 #define PIN_BATT_VOLTAGE ( D63 )

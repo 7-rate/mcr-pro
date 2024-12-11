@@ -1123,7 +1123,7 @@ void failsafe() {
 void timer_1ms_task( timer_callback_args_t* p_args ) {
     encoder();
     angle_update();
-    line_error_update();
+    line_sensor_update();
     servo_control();
     motor_control();
 

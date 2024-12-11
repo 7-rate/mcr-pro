@@ -35,11 +35,15 @@ s4 temperature; // 温度 LSB:1[degC]
 u4 servo_enc_pulse_1ms; // 1msあたりのサーボエンコーダのパルス数 LSB:1[-]
 s2 steer_angle;         // ステアリング角度 LSB:0.1[deg]
 
-u4 line_left_raw;  // アナログセンサーの左側の生値 10bitADCの値 LSB:1[-]
-u4 line_right_raw; // アナログセンサーの右側の生値 10bitADCの値 LSB:1[-]
-s4 line_left;      // アナログセンサーの左側の値(補正後) LSB:1[-]
-s4 line_right;     // アナログセンサーの右側の値(補正後) LSB:1[-]
-s4 line_error;     // アナログセンサーの左右差分値 10bit -1024~1023 LSB:1[-]
+u4 ar3_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+u4 ar2_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+u4 ar1_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+u4 ac_raw;  // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+u4 al1_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+u4 al2_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+u4 al3_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+
+s4 line_error; // アナログセンサーの左右差分値 10bit -1024~1023 LSB:1[-]
 
 u4 slope_raw;    // 坂センサーの生値 14bitADCの値 LSB:1[-]
 s1 slope_status; // 坂ステータス -1:下り 0:平坦 1:上り
@@ -79,17 +83,17 @@ ezButton button_save( PIN_BUTTON_SAVE );
  */
 static void digital_sensor_update() {
     u1 temp_line_digital = 0;
-    temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_CENTER ) << 4;
-    temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_8 ) << 3;
-    temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_4 ) << 2;
-    temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_2 ) << 1;
-    temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_1 ) << 0;
+    // temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_CENTER ) << 4;
+    // temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_8 ) << 3;
+    // temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_4 ) << 2;
+    // temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_2 ) << 1;
+    // temp_line_digital |= !my_digital_read( PIN_LINE_DIGITAL_1 ) << 0;
 
-    u1 temp_gate = !my_digital_read( PIN_LINE_DIGITAL_GATE );
+    // u1 temp_gate = !my_digital_read( PIN_LINE_DIGITAL_GATE );
 
     noInterrupts();
     line_digital = temp_line_digital;
-    gate = temp_gate;
+    gate = 0;
     interrupts();
 }
 
@@ -182,43 +186,36 @@ static void centrifugal_force_update() {
  * 戻り値：なし
  * 詳細：センサ基板がセンターからどの程度ずれているかを-1024~1023で返す
  */
-void line_error_update() {
-    line_left_raw = analogRead( PIN_LINE_ANALOG_LEFT );
-    line_right_raw = analogRead( PIN_LINE_ANALOG_RIGHT );
-    line_left = map( line_left_raw, prm_line_trace_left_B.get(), prm_line_trace_left_W.get(), 800, 0 );
-    line_right = map( line_right_raw, prm_line_trace_right_B.get(), prm_line_trace_right_W.get(), 800, 0 );
-    line_left = constrain( line_left, 0, 800 );
-    line_right = constrain( line_right, 0, 800 );
+void line_sensor_update() {
+    ar3_raw = analogRead( PIN_LINE_AR3 );
+    ar2_raw = analogRead( PIN_LINE_AR2 );
+    ar1_raw = analogRead( PIN_LINE_AR1 );
+    ac_raw = analogRead( PIN_LINE_AC );
+    al1_raw = analogRead( PIN_LINE_AL1 );
+    al2_raw = analogRead( PIN_LINE_AL2 );
+    al3_raw = analogRead( PIN_LINE_AL3 );
 
-    line_error = line_right - line_left;
+    // DBG_PRINT( "%d\t%d\t%d\t%d\t%d\t%d\t%d\n", ar3_raw, ar2_raw, ar1_raw, ac_raw, al1_raw, al2_raw, al3_raw );
+    // u4 ar3 = map( ar3_raw, prm_line_AR3_B.get(), prm_line_AR3_W.get(), 0, 1023 );
+    // u4 ar2 = map( ar2_raw, prm_line_AR2_B.get(), prm_line_AR2_W.get(), 0, 1023 );
+    // u4 ar1 = map( ar1_raw, prm_line_AR1_B.get(), prm_line_AR1_W.get(), 0, 1023 );
+    // u4 ac = map( ac_raw, prm_line_AC_B.get(), prm_line_AC_W.get(), 0, 1023 );
+    // u4 al1 = map( al1_raw, prm_line_AL1_B.get(), prm_line_AL1_W.get(), 0, 1023 );
+    // u4 al2 = map( al2_raw, prm_line_AL2_B.get(), prm_line_AL2_W.get(), 0, 1023 );
+    // u4 al3 = map( al3_raw, prm_line_AL3_B.get(), prm_line_AL3_W.get(), 0, 1023 );
 
-    // デジタルセンサが反応していたら上書きする
-    switch ( line_digital ) {
-    // 右に切れている
-    case 0x14:
-        line_error = 800;
-        break;
-    case 0x0C:
-        line_error = 900;
-        break;
-    case 0x08:
-        line_error = 1024;
-        break;
+    s4 ar3 = ar3_raw;
+    s4 ar2 = ar2_raw;
+    s4 ar1 = ar1_raw;
+    s4 ac = ac_raw;
+    s4 al1 = al1_raw;
+    s4 al2 = al2_raw;
+    s4 al3 = al3_raw;
 
-    // 左に切れている
-    case 0x12:
-        line_error = -800;
-        break;
-    case 0x03:
-        line_error = -900;
-        break;
-    case 0x01:
-        line_error = -1023;
-        break;
-
-    default:
-        break;
-    }
+    s4 gravity_center = ( ( ar3 * 3072 ) + ( ar2 * 2048 ) + ( ar1 * 1024 ) + ( al1 * -1024 ) + ( al2 * -2048 ) + ( al3 * -3072 ) ) /
+                        ( ar3 + ar2 + ar1 + ac + al1 + al2 + al3 );
+    DBG_PRINT( "%d\n", gravity_center );
+    wait_ms( 100 );
 }
 
 /*
@@ -289,16 +286,14 @@ void button_screen_update() {
  */
 void sensors_init() {
     // ラインセンサーの初期化
-    pinMode( PIN_LINE_ANALOG_LEFT, INPUT );
-    pinMode( PIN_LINE_ANALOG_RIGHT, INPUT );
+    pinMode( PIN_LINE_AR3, INPUT );
+    pinMode( PIN_LINE_AR2, INPUT );
+    pinMode( PIN_LINE_AR1, INPUT );
+    pinMode( PIN_LINE_AC, INPUT );
+    pinMode( PIN_LINE_AL1, INPUT );
+    pinMode( PIN_LINE_AL2, INPUT );
+    pinMode( PIN_LINE_AL3, INPUT );
     analogReadResolution( 10 );
-
-    pinMode( PIN_LINE_DIGITAL_GATE, INPUT );
-    pinMode( PIN_LINE_DIGITAL_CENTER, INPUT );
-    pinMode( PIN_LINE_DIGITAL_8, INPUT );
-    pinMode( PIN_LINE_DIGITAL_4, INPUT );
-    pinMode( PIN_LINE_DIGITAL_2, INPUT );
-    pinMode( PIN_LINE_DIGITAL_1, INPUT );
 
     // ディップスイッチの初期化
     dip_switch.byte = 0;

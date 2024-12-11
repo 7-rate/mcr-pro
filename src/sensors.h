@@ -27,7 +27,7 @@ extern void button_screen_update();
 extern void encoder_reset();
 extern void sensors_init();
 extern void sensors_update();
-extern void line_error_update();
+extern void line_sensor_update();
 
 /***********************************/
 /* Global Variables                */
@@ -43,11 +43,14 @@ extern s4 temperature; // 温度 LSB:1[degC]
 extern u4 servo_enc_pulse_1ms; // 1msあたりのサーボエンコーダのパルス数 LSB:1[-]
 extern s2 steer_angle;         // ステアリング角度 LSB:0.1[deg]
 
-extern u4 line_left_raw;  // アナログセンサーの左側の生値 10bitADCの値 LSB:1[-]
-extern u4 line_right_raw; // アナログセンサーの右側の生値 10bitADCの値 LSB:1[-]
-extern s4 line_left;      // アナログセンサーの左側の値(補正後) LSB:1[-]
-extern s4 line_right;     // アナログセンサーの右側の値(補正後) LSB:1[-]
-extern s4 line_error;     // アナログセンサーの左右差分値 10bit -1024~1023 LSB:1[-]
+extern u4 ar3_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern u4 ar2_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern u4 ar1_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern u4 ac_raw;     // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern u4 al1_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern u4 al2_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern u4 al3_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern s4 line_error; // アナログセンサーの左右差分値 10bit -1024~1023 LSB:1[-]
 
 extern u4 slope_raw;    // 坂センサーの生値 14bitADCの値 LSB:1[-]
 extern s1 slope_status; // 坂ステータス -1:下り 0:平坦 1:上り

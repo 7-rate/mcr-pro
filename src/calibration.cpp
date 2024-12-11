@@ -27,10 +27,20 @@ parameter prm_line_trace_P( 100, 0, 10000, LSB_1, CATEGORY_LINE_TRACE, "lineP", 
 parameter prm_line_trace_I( 10, 0, 1000, LSB_1, CATEGORY_LINE_TRACE, "lineI", "ライントレース時のI値" );
 parameter prm_line_trace_D( 10, 0, 1000, LSB_1, CATEGORY_LINE_TRACE, "lineD", "ライントレース時のD値" );
 
-parameter prm_line_trace_left_W( 3000, 0, 4095, LSB_1, CATEGORY_SENSOR_CALIBRATION, "left_W", "ライントレース白補正_左" );
-parameter prm_line_trace_right_W( 3000, 0, 4095, LSB_1, CATEGORY_SENSOR_CALIBRATION, "right_W", "ライントレース白補正_右" );
-parameter prm_line_trace_left_B( 80, 0, 4095, LSB_1, CATEGORY_SENSOR_CALIBRATION, "left_B", "ライントレース黒補正_左" );
-parameter prm_line_trace_right_B( 80, 0, 4095, LSB_1, CATEGORY_SENSOR_CALIBRATION, "right_B", "ライントレース黒補正_右" );
+parameter prm_line_AR3_W( 800, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "ar3_W", "AR3_白" );
+parameter prm_line_AR2_W( 800, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "ar2_W", "AR2_白" );
+parameter prm_line_AR1_W( 800, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "ar1_W", "AR1_白" );
+parameter prm_line_AC_W( 800, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "ac_W", "AC_白" );
+parameter prm_line_AL1_W( 800, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "al1_W", "AL1_白" );
+parameter prm_line_AL2_W( 800, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "al2_W", "AL2_白" );
+parameter prm_line_AL3_W( 800, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "al3_W", "AL3_白" );
+parameter prm_line_AR3_B( 100, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "ar3_B", "AR3_黒" );
+parameter prm_line_AR2_B( 100, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "ar2_B", "AR2_黒" );
+parameter prm_line_AR1_B( 100, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "ar1_B", "AR1_黒" );
+parameter prm_line_AC_B( 100, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "ac_B", "AC_黒" );
+parameter prm_line_AL1_B( 100, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "al1_B", "AL1_黒" );
+parameter prm_line_AL2_B( 100, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "al2_B", "AL2_黒" );
+parameter prm_line_AL3_B( 100, 0, 1024, LSB_1, CATEGORY_SENSOR_CALIBRATION, "al3_B", "AL3_黒" );
 
 parameter prm_angle_ctrl_P( 1000, 0, 1000, LSB_1, CATEGORY_ANGLE_CTRL, "angleP", "角度制御時のP値" );
 parameter prm_angle_ctrl_I( 0, 0, 1000, LSB_1, CATEGORY_ANGLE_CTRL, "angleI", "角度制御時のI値" );

@@ -165,10 +165,21 @@ class parameter {
 extern parameter prm_line_trace_P;
 extern parameter prm_line_trace_I;
 extern parameter prm_line_trace_D;
-extern parameter prm_line_trace_left_W;
-extern parameter prm_line_trace_right_W;
-extern parameter prm_line_trace_left_B;
-extern parameter prm_line_trace_right_B;
+
+extern parameter prm_line_AR3_W;
+extern parameter prm_line_AR2_W;
+extern parameter prm_line_AR1_W;
+extern parameter prm_line_AC_W;
+extern parameter prm_line_AL1_W;
+extern parameter prm_line_AL2_W;
+extern parameter prm_line_AL3_W;
+extern parameter prm_line_AR3_B;
+extern parameter prm_line_AR2_B;
+extern parameter prm_line_AR1_B;
+extern parameter prm_line_AC_B;
+extern parameter prm_line_AL1_B;
+extern parameter prm_line_AL2_B;
+extern parameter prm_line_AL3_B;
 
 extern parameter prm_angle_ctrl_P;
 extern parameter prm_angle_ctrl_I;
