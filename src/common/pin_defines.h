@@ -64,7 +64,7 @@
 #define PIN_BATT_VOLTAGE ( D63 )
 
 // ボタン
-#define PIN_BUTTON_START ( D27 )
+#define PIN_BUTTON_START ( D56 )
 #define PIN_BUTTON_LEFT ( D61 )
 #define PIN_BUTTON_UP ( A0 )
 #define PIN_BUTTON_RIGHT ( A1 )
@@ -75,7 +75,7 @@
 // ディップスイッチ
 #define PIN_BOARD_DIPSW_1 ( D25 )
 #define PIN_BOARD_DIPSW_2 ( D26 )
-#define PIN_DIPSW_1 ( D33 )
+#define PIN_DIPSW_1 ( D27 )
 #define PIN_DIPSW_2 ( D28 )
 #define PIN_DIPSW_3 ( D29 )
 #define PIN_DIPSW_4 ( D30 )
