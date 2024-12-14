@@ -125,12 +125,12 @@ static void battery_update() {
  * 詳細：ディップスイッチを更新する
  */
 static void dip_switch_update() {
-    dip_switch.bit.sw1 = my_digital_read( PIN_DIPSW_1 );
-    dip_switch.bit.sw2 = my_digital_read( PIN_DIPSW_2 );
-    dip_switch.bit.sw3 = my_digital_read( PIN_DIPSW_3 );
-    dip_switch.bit.sw4 = my_digital_read( PIN_DIPSW_4 );
-    dip_switch.bit.board_sw1 = my_digital_read( PIN_BOARD_DIPSW_1 );
-    dip_switch.bit.board_sw2 = my_digital_read( PIN_BOARD_DIPSW_2 );
+    dip_switch.bit.sw1 = !my_digital_read( PIN_DIPSW_1 );
+    dip_switch.bit.sw2 = !my_digital_read( PIN_DIPSW_2 );
+    dip_switch.bit.sw3 = !my_digital_read( PIN_DIPSW_3 );
+    dip_switch.bit.sw4 = !my_digital_read( PIN_DIPSW_4 );
+    dip_switch.bit.board_sw1 = !my_digital_read( PIN_BOARD_DIPSW_1 );
+    dip_switch.bit.board_sw2 = !my_digital_read( PIN_BOARD_DIPSW_2 );
 }
 
 /*

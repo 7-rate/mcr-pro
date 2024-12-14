@@ -75,10 +75,10 @@
 // ディップスイッチ
 #define PIN_BOARD_DIPSW_1 ( D25 )
 #define PIN_BOARD_DIPSW_2 ( D26 )
-#define PIN_DIPSW_1 ( D27 )
-#define PIN_DIPSW_2 ( D28 )
-#define PIN_DIPSW_3 ( D29 )
-#define PIN_DIPSW_4 ( D30 )
+#define PIN_DIPSW_1 ( D30 )
+#define PIN_DIPSW_2 ( D29 )
+#define PIN_DIPSW_3 ( D28 )
+#define PIN_DIPSW_4 ( D27 )
 
 // LED
 #define PIN_NEOPIXEL ( D74 )
