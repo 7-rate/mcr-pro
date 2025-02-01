@@ -5,6 +5,7 @@
 
 #pragma once
 #include "defines.h"
+#include "calibration.h"
 #include "ezButton.h"
 
 /******************************************************************/
@@ -17,6 +18,45 @@
 /***********************************/
 /* Class                           */
 /***********************************/
+
+// アナログセンサの管理クラス
+// フィルター処理(移動平均)を行う
+class AnalogSensor {
+  public:
+    u4 raw;
+
+  private:
+    constexpr static u1 move_average_size = 3;
+
+  public:
+    AnalogSensor( parameter* black, parameter* white ) : black( black ), white( white ) {
+        memset( filter_buf, 0, sizeof( filter_buf ) );
+        idx = 0;
+    }
+    void push( u4 raw ) {
+        this->raw = raw;
+        filter_buf[idx] = raw;
+        idx = ( idx + 1 ) % move_average_size;
+    }
+    u4 get() {
+        u4 sum = 0;
+        for ( u1 i = 0; i < move_average_size; i++ ) {
+            sum += filter_buf[i];
+        }
+        return sum / move_average_size;
+    }
+    u4 corrected() {
+        s4 temp = map( get(), black->get(), white->get(), 0, 1023 );
+        temp = constrain( temp, 0, 1023 );
+        return (u4)temp;
+    }
+
+  private:
+    u4 filter_buf[move_average_size]; // フィルター用バッファ
+    u1 idx;
+    parameter* black;
+    parameter* white;
+};
 
 /***********************************/
 /* Global functions                */
@@ -43,14 +83,14 @@ extern s4 temperature; // 温度 LSB:1[degC]
 extern u4 servo_enc_pulse_1ms; // 1msあたりのサーボエンコーダのパルス数 LSB:1[-]
 extern s2 steer_angle;         // ステアリング角度 LSB:0.1[deg]
 
-extern u4 ar3_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-extern u4 ar2_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-extern u4 ar1_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-extern u4 ac_raw;     // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-extern u4 al1_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-extern u4 al2_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-extern u4 al3_raw;    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-extern s4 line_error; // アナログセンサーの左右差分値 10bit -1024~1023 LSB:1[-]
+extern AnalogSensor ar3; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern AnalogSensor ar2; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern AnalogSensor ar1; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern AnalogSensor ac;  // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern AnalogSensor al1; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern AnalogSensor al2; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern AnalogSensor al3; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+extern s4 line_error;    // アナログセンサーの左右差分値 10bit -1024~1023 LSB:1[-]
 
 extern u4 slope_raw;    // 坂センサーの生値 14bitADCの値 LSB:1[-]
 extern s1 slope_status; // 坂ステータス -1:下り 0:平坦 1:上り

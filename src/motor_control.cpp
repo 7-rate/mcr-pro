@@ -159,6 +159,7 @@ void servo_control() {
         kd = prm_line_trace_D.get();
 
         target = 0 + servo_ctrl_line_trace_offset;
+        line_error *= -1;
         error = target - line_error; // line_errorは-1024～1023
         servo_ctrl_line_error_sum += error;
         servo_ctrl_line_error_sum = constrain( servo_ctrl_line_error_sum, -1024, 1023 );

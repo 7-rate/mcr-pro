@@ -35,15 +35,16 @@ s4 temperature; // 温度 LSB:1[degC]
 u4 servo_enc_pulse_1ms; // 1msあたりのサーボエンコーダのパルス数 LSB:1[-]
 s2 steer_angle;         // ステアリング角度 LSB:0.1[deg]
 
-u4 ar3_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-u4 ar2_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-u4 ar1_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-u4 ac_raw;  // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-u4 al1_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-u4 al2_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
-u4 al3_raw; // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+AnalogSensor ar3( &prm_line_AR3_B, &prm_line_AR3_W ); // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+AnalogSensor ar2( &prm_line_AR2_B, &prm_line_AR2_W ); // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+AnalogSensor ar1( &prm_line_AR1_B, &prm_line_AR1_W ); // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+AnalogSensor ac( &prm_line_AC_B, &prm_line_AC_W );    // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+AnalogSensor al1( &prm_line_AL1_B, &prm_line_AL1_W ); // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+AnalogSensor al2( &prm_line_AL2_B, &prm_line_AL2_W ); // アナログセンサーの生値 10bitADCの値 LSB:1[-]
+AnalogSensor al3( &prm_line_AL3_B, &prm_line_AL3_W ); // アナログセンサーの生値 10bitADCの値 LSB:1[-]
 
-s4 line_error; // アナログセンサーの左右差分値 10bit -1024~1023 LSB:1[-]
+s4 line_error;     // アナログセンサーの左右差分値 10bit -1024~1023 LSB:1[-]
+s4 line_error_old; // 前回値
 
 u4 slope_raw;    // 坂センサーの生値 14bitADCの値 LSB:1[-]
 s1 slope_status; // 坂ステータス -1:下り 0:平坦 1:上り
@@ -184,38 +185,108 @@ static void centrifugal_force_update() {
  * 概要： ラインセンサーの値を更新する
  * 引数：なし
  * 戻り値：なし
- * 詳細：センサ基板がセンターからどの程度ずれているかを-1024~1023で返す
+ * 詳細：センサ基板がセンターからどの程度ずれているかを-3072~3072で返す
  */
 void line_sensor_update() {
-    ar3_raw = analogRead( PIN_LINE_AR3 );
-    ar2_raw = analogRead( PIN_LINE_AR2 );
-    ar1_raw = analogRead( PIN_LINE_AR1 );
-    ac_raw = analogRead( PIN_LINE_AC );
-    al1_raw = analogRead( PIN_LINE_AL1 );
-    al2_raw = analogRead( PIN_LINE_AL2 );
-    al3_raw = analogRead( PIN_LINE_AL3 );
+    ar3.push( analogRead( PIN_LINE_AR3 ) );
+    ar2.push( analogRead( PIN_LINE_AR2 ) );
+    ar1.push( analogRead( PIN_LINE_AR1 ) );
+    ac.push( analogRead( PIN_LINE_AC ) );
+    al1.push( analogRead( PIN_LINE_AL1 ) );
+    al2.push( analogRead( PIN_LINE_AL2 ) );
+    al3.push( analogRead( PIN_LINE_AL3 ) );
 
-    // DBG_PRINT( "%d\t%d\t%d\t%d\t%d\t%d\t%d\n", ar3_raw, ar2_raw, ar1_raw, ac_raw, al1_raw, al2_raw, al3_raw );
-    // u4 ar3 = map( ar3_raw, prm_line_AR3_B.get(), prm_line_AR3_W.get(), 0, 1023 );
-    // u4 ar2 = map( ar2_raw, prm_line_AR2_B.get(), prm_line_AR2_W.get(), 0, 1023 );
-    // u4 ar1 = map( ar1_raw, prm_line_AR1_B.get(), prm_line_AR1_W.get(), 0, 1023 );
-    // u4 ac = map( ac_raw, prm_line_AC_B.get(), prm_line_AC_W.get(), 0, 1023 );
-    // u4 al1 = map( al1_raw, prm_line_AL1_B.get(), prm_line_AL1_W.get(), 0, 1023 );
-    // u4 al2 = map( al2_raw, prm_line_AL2_B.get(), prm_line_AL2_W.get(), 0, 1023 );
-    // u4 al3 = map( al3_raw, prm_line_AL3_B.get(), prm_line_AL3_W.get(), 0, 1023 );
+    s4 sensor_values[7] = { (s4)ar3.corrected(), (s4)ar2.corrected(), (s4)ar1.corrected(), (s4)ac.corrected(),
+                            (s4)al1.corrected(), (s4)al2.corrected(), (s4)al3.corrected() };
 
-    s4 ar3 = ar3_raw;
-    s4 ar2 = ar2_raw;
-    s4 ar1 = ar1_raw;
-    s4 ac = ac_raw;
-    s4 al1 = al1_raw;
-    s4 al2 = al2_raw;
-    s4 al3 = al3_raw;
+    // 山の数を数える
+    // 下がったところで山としてカウントする
+    u1 mount_count = 0;
+    s1 trend = 0; // -1:下り 0:平坦 1:上り
+    s1 trend_old = 0;
+    if ( sensor_values[0] > 0 ) {
+        mount_count++;
+        trend_old = 1;
+    }
+    for ( u1 i = 1; i < 7; i++ ) { // 1始まりであることに注意
+        trend = ( sensor_values[i - 1] < sensor_values[i] ) ? 1 : ( sensor_values[i - 1] > sensor_values[i] ) ? -1 : 0;
+        // 上りの後に下りになったら山とする
+        if ( ( trend_old == 0 || trend_old == -1 ) && trend == 1 ) {
+            mount_count++;
+        }
 
-    s4 gravity_center = ( ( ar3 * 3072 ) + ( ar2 * 2048 ) + ( ar1 * 1024 ) + ( al1 * -1024 ) + ( al2 * -2048 ) + ( al3 * -3072 ) ) /
-                        ( ar3 + ar2 + ar1 + ac + al1 + al2 + al3 );
-    DBG_PRINT( "%d\n", gravity_center );
-    wait_ms( 100 );
+        trend_old = trend;
+    }
+
+    s4 gravity_center;
+    s4 bunshi; // 分子
+    s4 bunbo;  // 分母
+    s4 pivot_value;
+    // 山の数によって処理を変える
+    switch ( mount_count ) {
+    case 2: {
+        // 山が2つある場合は前回値を軸(pivot)とし、軸からの距離で重みを付けて重心を求めるようにする
+        // まずはpivotを求める
+        u1 pivot = 0;
+        u4 diff_pivot_min = UINT32_MAX;
+        pivot_value = 3072;
+        for ( u1 i = 0; i < 7; i++, pivot_value -= 1024 ) {
+            u4 diff_pivot = abs( pivot_value - line_error_old );
+            if ( diff_pivot < diff_pivot_min ) {
+                pivot = i;
+                diff_pivot_min = diff_pivot;
+            }
+        }
+
+        // pivotを100%として離れているところは以下のように重みを付ける
+        // 0(pivot) : 100%
+        // ±1 : 90%
+        // ±2 : 75%
+        // ±3 : 20%
+        // ±4 : 0%
+        // ±5 : 0%
+        // ±6 : 0%
+        for ( u1 i = 0; i < 7; i++ ) {
+            u1 diff = abs( pivot - i );
+            if ( diff == 0 ) {
+                ; // 100%
+            } else if ( diff == 1 ) {
+                sensor_values[i] = ( sensor_values[i] * 90 ) / 100;
+            } else if ( diff == 2 ) {
+                sensor_values[i] = ( sensor_values[i] * 75 ) / 100;
+            } else if ( diff == 3 ) {
+                sensor_values[i] = ( sensor_values[i] * 20 ) / 100;
+            } else {
+                sensor_values[i] = 0;
+            }
+        }
+        /* fall-through */
+    }
+    case 1: {
+        // 重心を求める
+        bunshi = 0;
+        bunbo = 0;
+        pivot_value = 3072;
+        for ( u1 i = 0; i < 7; i++, pivot_value -= 1024 ) {
+            bunshi += ( sensor_values[i] * pivot_value );
+            bunbo += sensor_values[i];
+        }
+        if ( bunbo != 0 ) {
+            gravity_center = bunshi / bunbo;
+        } else {
+            gravity_center = 0;
+        }
+
+        break;
+    }
+    default:
+        // 山が0もしくは3以上の場合は難所の恐れがある。その場合はステアリングを変に操作したくないため0を返す。
+        gravity_center = 0;
+        break;
+    }
+
+    line_error = gravity_center;
+    line_error_old = line_error;
 }
 
 /*

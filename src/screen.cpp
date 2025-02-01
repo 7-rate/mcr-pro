@@ -598,13 +598,14 @@ void display_sensor_calibration() {
         display_draw_str( COL_ITEM, ROW_1, "Black" );
     }
 
-    display_draw_str( COL_ITEM, ROW_2, " %4d", ar3_raw );
-    display_draw_str( COL_ITEM, ROW_3, " %4d", ar2_raw );
-    display_draw_str( COL_ITEM, ROW_4, " %4d", ar1_raw );
-    display_draw_str( COL_ITEM, ROW_5, " %4d", ac_raw );
-    display_draw_str( COL_ITEM, ROW_6, " %4d", al1_raw );
-    display_draw_str( COL_ITEM, ROW_7, " %4d", al2_raw );
-    display_draw_str( COL_ITEM, ROW_8, " %4d", al3_raw );
+    display_draw_str( 0, ROW_2, "%4d %4d", ar3.corrected(), ar3.raw );
+    display_draw_str( 0, ROW_3, "%4d %4d", ar2.corrected(), ar2.raw );
+    display_draw_str( 0, ROW_4, "%4d %4d", ar1.corrected(), ar1.raw );
+    display_draw_str( 0, ROW_5, "%4d %4d", ac.corrected(), ac.raw );
+    display_draw_str( 0, ROW_6, "%4d %4d", al1.corrected(), al1.raw );
+    display_draw_str( 0, ROW_7, "%4d %4d", al2.corrected(), al2.raw );
+    display_draw_str( 0, ROW_8, "%4d %4d", al3.corrected(), al3.raw );
+    display_draw_str( 0, ROW_10, " %4d", line_error );
 
     if ( sensor_calibration_status == CALIBRATION_W ) {
         display_draw_str( COL_ITEM, ROW_11, "Next" );
@@ -631,24 +632,24 @@ void display_sensor_calibration() {
         if ( sensor_calibration_cursor == 0 ) {
             switch ( sensor_calibration_status ) {
             case CALIBRATION_W:
-                prm_line_AR3_W = ar3_raw;
-                prm_line_AR2_W = ar2_raw;
-                prm_line_AR1_W = ar1_raw;
-                prm_line_AC_W = ac_raw;
-                prm_line_AL1_W = al1_raw;
-                prm_line_AL2_W = al2_raw;
-                prm_line_AL3_W = al3_raw;
+                prm_line_AR3_W = ar3.get();
+                prm_line_AR2_W = ar2.get();
+                prm_line_AR1_W = ar1.get();
+                prm_line_AC_W = ac.get();
+                prm_line_AL1_W = al1.get();
+                prm_line_AL2_W = al2.get();
+                prm_line_AL3_W = al3.get();
 
                 sensor_calibration_status = CALIBRATION_B;
                 break;
             case CALIBRATION_B:
-                prm_line_AR3_B = ar3_raw;
-                prm_line_AR2_B = ar2_raw;
-                prm_line_AR1_B = ar1_raw;
-                prm_line_AC_B = ac_raw;
-                prm_line_AL1_B = al1_raw;
-                prm_line_AL2_B = al2_raw;
-                prm_line_AL3_B = al3_raw;
+                prm_line_AR3_B = ar3.get();
+                prm_line_AR2_B = ar2.get();
+                prm_line_AR1_B = ar1.get();
+                prm_line_AC_B = ac.get();
+                prm_line_AL1_B = al1.get();
+                prm_line_AL2_B = al2.get();
+                prm_line_AL3_B = al3.get();
                 sensor_calibration_status = CALIBRATION_SAVE;
                 break;
             default:

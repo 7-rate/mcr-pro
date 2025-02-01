@@ -72,7 +72,7 @@
 #define PIN_BATT_VOLTAGE ( D63 )
 
 // ボタン
-#define PIN_BUTTON_START ( D56 )
+#define PIN_BUTTON_START ( D10 )
 #define PIN_BUTTON_LEFT ( D61 )
 #define PIN_BUTTON_UP ( A0 )
 #define PIN_BUTTON_RIGHT ( A1 )
@@ -99,8 +99,8 @@ _FL_DEFPIN( PIN_NEOPIXEL, BSP_IO_PORT_06_PIN_09, R_PORT6_BASE ); // FastLEDの�
 #define PIN_GP_ENC_B ( D9 )
 
 // 汎用デジタルピン
-#define PIN_GP_1 ( D44 )
-#define PIN_GP_2 ( D43 )
+#define PIN_GP_1 ( D34 )
+#define PIN_GP_2 ( D33 )
 
 // 汎用ADCピン
 #define PIN_GP_AN_1 ( D62 )

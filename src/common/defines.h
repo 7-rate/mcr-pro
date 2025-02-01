@@ -6,8 +6,8 @@
 #include <Arduino.h>
 #include "pin_defines.h"
 
-#define MCR_APP_DEBUG ( 1 )
-#define COMMAND_TEST_MODE ( 1 )
+#define MCR_APP_DEBUG ( 0 )
+#define COMMAND_TEST_MODE ( 0 )
 
 /******************************************************************/
 /* Definitions                                                    */
@@ -224,7 +224,7 @@ enum {
     } while ( 0 )
 
 #else
-#define DBG_PRINT( str )                                                                                                                             \
+#define DBG_PRINT( fmt, ... )                                                                                                                        \
     do {                                                                                                                                             \
     } while ( 0 )
 
