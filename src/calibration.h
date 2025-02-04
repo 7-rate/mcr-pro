@@ -166,6 +166,7 @@ extern parameter prm_line_trace_P;
 extern parameter prm_line_trace_I;
 extern parameter prm_line_trace_D;
 
+#if defined( CONFIG_LINE_SENSOR_STEALTH )
 extern parameter prm_line_AR3_W;
 extern parameter prm_line_AR2_W;
 extern parameter prm_line_AR1_W;
@@ -180,6 +181,12 @@ extern parameter prm_line_AC_B;
 extern parameter prm_line_AL1_B;
 extern parameter prm_line_AL2_B;
 extern parameter prm_line_AL3_B;
+#elif defined( CONFIG_LINE_SENSOR_D5A2 )
+extern parameter prm_line_trace_left_W;
+extern parameter prm_line_trace_right_W;
+extern parameter prm_line_trace_left_B;
+extern parameter prm_line_trace_right_B;
+#endif
 
 extern parameter prm_angle_ctrl_P;
 extern parameter prm_angle_ctrl_I;
