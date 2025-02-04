@@ -15,6 +15,10 @@
 #include "indicator.h"
 #include "interval.h"
 #include "time_measure.h"
+#include "line_sensor.h"
+#if defined( CONFIG_LINE_SENSOR_STEALTH )
+#include "stealth.h"
+#endif
 
 extern void run_mode_change_to( enum e_run_mode mode, bool dist_measure_reset = true, bool run_status_reset = true );
 
@@ -251,10 +255,10 @@ void display_sensor_view() {
     display_draw_title( "SensorView" );
 
     display_draw_str( 0, ROW_1, "Dig" );
-    display_draw_str( COL_VALUE_R, ROW_1, "%4X", line_digital | gate << 5 );
+    display_draw_str( COL_VALUE_R, ROW_1, "%4X", ls.line_digital );
 
     display_draw_str( 0, ROW_2, "Err" );
-    display_draw_str( COL_VALUE_R, ROW_2, "%4d", line_error );
+    display_draw_str( COL_VALUE_R, ROW_2, "%4d", ls.line_error );
 
     display_draw_str( 0, ROW_5, "Enc" );
     display_draw_str( COL_VALUE_R, ROW_5, "%4d", distance );
@@ -598,14 +602,17 @@ void display_sensor_calibration() {
         display_draw_str( COL_ITEM, ROW_1, "Black" );
     }
 
-    display_draw_str( 0, ROW_2, "%4d %4d", ar3.corrected(), ar3.raw );
-    display_draw_str( 0, ROW_3, "%4d %4d", ar2.corrected(), ar2.raw );
-    display_draw_str( 0, ROW_4, "%4d %4d", ar1.corrected(), ar1.raw );
-    display_draw_str( 0, ROW_5, "%4d %4d", ac.corrected(), ac.raw );
-    display_draw_str( 0, ROW_6, "%4d %4d", al1.corrected(), al1.raw );
-    display_draw_str( 0, ROW_7, "%4d %4d", al2.corrected(), al2.raw );
-    display_draw_str( 0, ROW_8, "%4d %4d", al3.corrected(), al3.raw );
-    display_draw_str( 0, ROW_10, " %4d", line_error );
+#if defined( CONFIG_LINE_SENSOR_STEALTH )
+    line_sensor_stealth* stealth = static_cast<line_sensor_stealth*>( &ls );
+    display_draw_str( 0, ROW_2, "%4d %4d", stealth->ar3->corrected(), stealth->ar3->raw );
+    display_draw_str( 0, ROW_3, "%4d %4d", stealth->ar2->corrected(), stealth->ar2->raw );
+    display_draw_str( 0, ROW_4, "%4d %4d", stealth->ar1->corrected(), stealth->ar1->raw );
+    display_draw_str( 0, ROW_5, "%4d %4d", stealth->ac->corrected(), stealth->ac->raw );
+    display_draw_str( 0, ROW_6, "%4d %4d", stealth->al1->corrected(), stealth->al1->raw );
+    display_draw_str( 0, ROW_7, "%4d %4d", stealth->al2->corrected(), stealth->al2->raw );
+    display_draw_str( 0, ROW_8, "%4d %4d", stealth->al3->corrected(), stealth->al3->raw );
+    display_draw_str( 0, ROW_10, " %4d", ls.line_error );
+#endif
 
     if ( sensor_calibration_status == CALIBRATION_W ) {
         display_draw_str( COL_ITEM, ROW_11, "Next" );
@@ -632,24 +639,28 @@ void display_sensor_calibration() {
         if ( sensor_calibration_cursor == 0 ) {
             switch ( sensor_calibration_status ) {
             case CALIBRATION_W:
-                prm_line_AR3_W = ar3.get();
-                prm_line_AR2_W = ar2.get();
-                prm_line_AR1_W = ar1.get();
-                prm_line_AC_W = ac.get();
-                prm_line_AL1_W = al1.get();
-                prm_line_AL2_W = al2.get();
-                prm_line_AL3_W = al3.get();
+#if defined( CONFIG_LINE_SENSOR_STEALTH )
+                prm_line_AR3_W = stealth->ar3->get();
+                prm_line_AR2_W = stealth->ar2->get();
+                prm_line_AR1_W = stealth->ar1->get();
+                prm_line_AC_W = stealth->ac->get();
+                prm_line_AL1_W = stealth->al1->get();
+                prm_line_AL2_W = stealth->al2->get();
+                prm_line_AL3_W = stealth->al3->get();
+#endif
 
                 sensor_calibration_status = CALIBRATION_B;
                 break;
             case CALIBRATION_B:
-                prm_line_AR3_B = ar3.get();
-                prm_line_AR2_B = ar2.get();
-                prm_line_AR1_B = ar1.get();
-                prm_line_AC_B = ac.get();
-                prm_line_AL1_B = al1.get();
-                prm_line_AL2_B = al2.get();
-                prm_line_AL3_B = al3.get();
+#if defined( CONFIG_LINE_SENSOR_STEALTH )
+                prm_line_AR3_B = stealth->ar3->get();
+                prm_line_AR2_B = stealth->ar2->get();
+                prm_line_AR1_B = stealth->ar1->get();
+                prm_line_AC_B = stealth->ac->get();
+                prm_line_AL1_B = stealth->al1->get();
+                prm_line_AL2_B = stealth->al2->get();
+                prm_line_AL3_B = stealth->al3->get();
+#endif
                 sensor_calibration_status = CALIBRATION_SAVE;
                 break;
             default:
@@ -944,6 +955,14 @@ void screen_exec() {
             display_pattern = DISPLAY_MAIN_MENU;
             break;
         }
+
+        // 右下にフレームレート表示
+        if ( CONFIG_SCREEN_FPS ) {
+            static u4 display_time = 0;
+            display_draw_str( 50, 131 - 10, "%d", (int)( 1000 / ( millis() - display_time ) ) );
+            display_time = millis();
+        }
+
         display.display();
 
         // セーブ画面遷移判断

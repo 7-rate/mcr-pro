@@ -6,9 +6,6 @@
 #include <Arduino.h>
 #include "pin_defines.h"
 
-#define MCR_APP_DEBUG ( 0 )
-#define COMMAND_TEST_MODE ( 0 )
-
 /******************************************************************/
 /* Definitions                                                    */
 /******************************************************************/
@@ -216,7 +213,7 @@ enum {
 /* Global functions                */
 /***********************************/
 /* デバッグ用 */
-#if MCR_APP_DEBUG
+#if CONFIG_MCR_APP_DEBUG
 #include <LibPrintf.h>
 #define DBG_PRINT( fmt, ... )                                                                                                                        \
     do {                                                                                                                                             \

@@ -140,7 +140,7 @@ bool nvm_save() {
  * 詳細：4byte単位でダンプする(デバッグ用)
  */
 bool nvm_dump() {
-    if ( MCR_APP_DEBUG ) {
+    if ( CONFIG_MCR_APP_DEBUG ) {
         DBG_PRINT( "start nvm dump\n" );
         for ( int i = 0; i < 0x200; i++ ) {
             u4 temp;

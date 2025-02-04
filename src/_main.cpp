@@ -22,6 +22,8 @@
 #include "indicator.h"
 #include "interval.h"
 #include "motor_control.h"
+#include "line_sensor.h"
+#include "features.h"
 
 /******************************************************************/
 /* Definitions                                                    */
@@ -295,8 +297,7 @@ bool run_judge_check_stop() {
     stop = false;
     if ( running_timer.measure() > 500 ) {
         pre_stop_flag = false;
-        if ( ( line_digital == 0x1f ) || ( line_digital == 0x1e ) || ( line_digital == 0x1d ) || ( line_digital == 0x1b ) ||
-             ( line_digital == 0x17 ) || ( line_digital == 0x19 ) || ( speed <= 10 ) ) {
+        if ( ( ls.stop_pattern() ) || ( speed <= 10 ) ) {
             pre_stop_flag = true;
         }
 
@@ -312,47 +313,6 @@ bool run_judge_check_stop() {
         }
     }
     return stop;
-}
-
-/*
- * 概要：左ハーフライン判断
- * 引数：デジタルセンサ値
- * 戻り値：true:左ハーフライン検出
- * 詳細：左ハーフライン判断
- */
-bool run_judge_left_half_line( u1 ld ) {
-    return ( ld == 0x1c ) || ( ld == 0x1e ) || ( ld == 0x0c );
-}
-
-/*
- * 概要：右ハーフライン判断
- * 引数：デジタルセンサ値
- * 戻り値：true:右ハーフライン検出
- * 詳細：右ハーフライン判断
- */
-bool run_judge_right_half_line( u1 ld ) {
-    return ( ld == 0x13 ) || ( ld == 0x17 ) || ( ld == 0x03 );
-}
-
-/*
- * 概要：クロスライン判断
- * 引数：デジタルセンサ値
- * 戻り値：true:クロスライン検出
- * 詳細：クロスライン判断
- */
-bool run_judge_cross_line( u1 ld ) {
-    // 0x1eや0x17の場合はアナログセンサも見て判断したほうがいいかもしれない
-    return ( ld == 0x1f ) || ( ld == 0x1e ) || ( ld == 0x17 );
-}
-
-/*
- * 概要：難所判断
- * 引数：デジタルセンサ値
- * 戻り値：true:難所判断
- * 詳細：難所判断
- */
-bool run_judge_difficult( u1 ld ) {
-    return run_judge_left_half_line( ld ) || run_judge_right_half_line( ld ) || run_judge_cross_line( ld );
 }
 
 /*
@@ -435,7 +395,7 @@ void running_pre_start() {
 
     if ( dip_switch.bit.sw1 ) {
         // ゲートセンサOPEN待ち
-        if ( gate == OPEN ) {
+        if ( ls.get_gate() == OPEN ) {
             go = true;
         }
     } else if ( dip_switch.bit.sw2 ) {
@@ -484,7 +444,7 @@ void running_stable() {
 
     spdctrl_stable( target_speed );
 
-    if ( run_judge_difficult( line_digital ) ) {
+    if ( ls.difficult() ) {
         line_digital_sum = 0x00;
         run_mode_change_to( RUN_PRE_DIFFICULT );
     }
@@ -529,22 +489,22 @@ void running_pre_difficult() {
     // 　一定距離デジタルセンサ値の論理和をとる
     //  しかし、pre_difficult遷移直後の値は捨てるため、ここでは7mm以降の値を取得する
     if ( distance >= 7 ) {
-        line_digital_sum |= line_digital;
+        line_digital_sum |= ls.line_digital;
     }
 
     // 40mm走行したら然るべきステートに遷移する
     if ( distance >= 40 ) {
-        if ( run_judge_cross_line( line_digital_sum ) ) {
+        if ( ls.x_line( line_digital_sum ) ) {
             run_mode_change_to( RUN_X_LINE_TRACE );
             start_difficult( RUN_X_LINE_TRACE );
             indicator_set_neopixel_led( NEOPIXEL_LED_PATTERN_DIFFICULT_ONE_SHOT );
             bz.set( 0x00000003 );
-        } else if ( run_judge_left_half_line( line_digital_sum ) ) {
+        } else if ( ls.left_half_line( line_digital_sum ) ) {
             run_mode_change_to( RUN_L_LANE_CHANGE );
             start_difficult( RUN_L_LANE_CHANGE );
             indicator_set_neopixel_led( NEOPIXEL_LED_PATTERN_DIFFICULT_ONE_SHOT );
             bz.set( 0x00000003 );
-        } else if ( run_judge_right_half_line( line_digital_sum ) ) {
+        } else if ( ls.right_half_line( line_digital_sum ) ) {
             run_mode_change_to( RUN_R_LANE_CHANGE );
             start_difficult( RUN_R_LANE_CHANGE );
             indicator_set_neopixel_led( NEOPIXEL_LED_PATTERN_DIFFICULT_ONE_SHOT );
@@ -565,9 +525,9 @@ void running_pre_difficult() {
 void running_x_line_trace() {
     set_servo_mode( LINE_TRACE );
     spdctrl_stable( speed_crossline );
-    if ( run_judge_right_half_line( line_digital ) ) {
+    if ( ls.right_half_line() ) {
         run_mode_change_to( RUN_R_CRANK );
-    } else if ( run_judge_left_half_line( line_digital ) ) {
+    } else if ( ls.left_half_line() ) {
         run_mode_change_to( RUN_L_CRANK );
     } else if ( dist_measure.measure() >= 1200 ) {
         run_mode_change_to( RUN_STABLE ); // ここに来るのは難所誤判定
@@ -590,27 +550,16 @@ void running_r_crank() {
         spdctrl_crank( speed_R_crank );
 
         if ( dist_measure.measure() >= 50 ) {
-            switch ( line_digital ) {
-            case 0x00: // -- - --
-            case 0x08: // x- - --
-            case 0x0c: // xx - --
-            case 0x1c: // xx x --
+            if ( ls.right_crank_outline() ) {
                 dist_measure.restart();
                 run_status = S10;
-                break;
-            case 0x14: // -x x --
-            case 0x10: // -- x --
-            case 0x12: // -- x x-
-            case 0x03: // -- - xx
-            case 0x01: // -- - -x
+            } else if ( ls.left_crank_outline() ) {
                 dist_measure.restart();
                 run_status = S20;
-                break;
-            default:
+            } else {
                 // ここに来るのはセンサ故障の疑いあり
                 dist_measure.restart();
                 run_status = S10;
-                break;
             }
             break;
         }
@@ -620,7 +569,7 @@ void running_r_crank() {
 
         if ( dist_measure.measure() >= 80 ) {
             // センターライン検出
-            if ( line_digital == 0x14 || line_digital == 0x10 || line_digital == 0x12 ) {
+            if ( ls.near_center() ) {
                 dist_measure.restart();
                 run_status = S20;
             } else {
@@ -662,27 +611,16 @@ void running_l_crank() {
         spdctrl_crank( speed_L_crank );
 
         if ( dist_measure.measure() >= 50 ) {
-            switch ( line_digital ) {
-            case 0x00: // -- - --
-            case 0x01: // -- - -x
-            case 0x03: // -- - xx
-            case 0x13: // -- x xx
+            if ( ls.left_crank_outline() ) {
                 dist_measure.restart();
                 run_status = S10;
-                break;
-            case 0x12: // -- x x-
-            case 0x10: // -- x --
-            case 0x14: // -x x --
-            case 0x0c: // xx - --
-            case 0x08: // x- - --
+            } else if ( ls.right_crank_outline() ) {
                 dist_measure.restart();
                 run_status = S20;
-                break;
-            default:
+            } else {
                 // ここに来るのはセンサ故障の疑いあり
                 dist_measure.restart();
                 run_status = S10;
-                break;
             }
         }
         break;
@@ -692,7 +630,7 @@ void running_l_crank() {
 
         if ( dist_measure.measure() >= 80 ) {
             // センターライン検出
-            if ( line_digital == 0x14 || line_digital == 0x10 || line_digital == 0x12 ) {
+            if ( ls.near_center() ) {
                 dist_measure.restart();
                 run_status = S20;
             } else {
@@ -732,7 +670,7 @@ void running_r_lane_change() {
         set_servo_mode( LINE_TRACE, prm_offset_R_lanechange.get() );
         spdctrl_stable( speed_R_lanechange );
 
-        if ( line_digital == 0x00 ) {
+        if ( ls.all_black() ) {
             dist_measure.restart();
             run_status = S10;
         }
@@ -747,8 +685,7 @@ void running_r_lane_change() {
         // 念のため、チャタ防止として50mm以上走行してからデジタルセンサを見るようにする
         if ( dist_measure.measure() >= 50 ) {
             // 中心寄りのデジタルセンサがどれか一つでも検出されたら次ステートへ
-            // 端っこのデジタルセンサはコース外側を見てる可能性があるため
-            if ( line_digital & 0x16 ) {
+            if ( ls.near_center() ) {
                 dist_measure.restart();
                 run_status = S20;
             }
@@ -760,7 +697,7 @@ void running_r_lane_change() {
 
         if ( dist_measure.measure() >= 50 ) {
             // 左端っこのセンサが反応するまで走行する
-            if ( line_digital == 0x08 || line_digital == 0x0c ) {
+            if ( ls.right_lanechange_next_lane() ) {
                 dist_measure.restart();
                 run_status = S30;
             }
@@ -771,7 +708,7 @@ void running_r_lane_change() {
         spdctrl_lane_change( speed_R_lanechange, -prm_angle_R_lanechange.get() );
 
         if ( dist_measure.measure() >= 50 ) {
-            if ( line_digital == 0x10 || line_digital == 0x12 || line_digital == 0x14 ) {
+            if ( ls.near_center() ) {
                 dist_measure.restart();
                 run_status = S40;
             }
@@ -802,7 +739,7 @@ void running_l_lane_change() {
         set_servo_mode( LINE_TRACE, prm_offset_L_lanechange.get() );
         spdctrl_stable( speed_L_lanechange );
 
-        if ( line_digital == 0x00 ) {
+        if ( ls.all_black() ) {
             dist_measure.restart();
             run_status = S10;
         }
@@ -817,8 +754,7 @@ void running_l_lane_change() {
         // 念のため、チャタ防止として50mm以上走行してからデジタルセンサを見るようにする
         if ( dist_measure.measure() >= 50 ) {
             // 中心寄りのデジタルセンサがどれか一つでも検出されたら次ステートへ
-            // 端っこのデジタルセンサはコース外側を見てる可能性があるため
-            if ( line_digital & 0x16 ) {
+            if ( ls.near_center() ) {
                 dist_measure.restart();
                 run_status = S20;
             }
@@ -830,7 +766,7 @@ void running_l_lane_change() {
 
         if ( dist_measure.measure() >= 50 ) {
             // 左端っこのセンサが反応するまで走行する
-            if ( line_digital == 0x01 || line_digital == 0x03 ) {
+            if ( ls.left_lanechange_next_lane() ) {
                 dist_measure.restart();
                 run_status = S30;
             }
@@ -841,7 +777,7 @@ void running_l_lane_change() {
         spdctrl_lane_change( speed_L_lanechange, -prm_angle_L_lanechange.get() );
 
         if ( dist_measure.measure() >= 50 ) {
-            if ( line_digital == 0x10 || line_digital == 0x12 || line_digital == 0x14 ) {
+            if ( ls.near_center() ) {
                 dist_measure.restart();
                 run_status = S40;
             }
@@ -875,11 +811,11 @@ void running_slope() {
         spdctrl_stable( speed_stable );
 
         // 難所判断
-        if ( run_judge_difficult( line_digital ) ) {
+        if ( ls.difficult() ) {
             // ここに来る場合は以下のいずれか。1はアナログで判断している関係上、比較的可能性が高いのでデジタルセンサを信じて難所処理する。
             // 1.坂道センサが誤検出した
             // 2.デジタルセンサが誤検出した
-            line_digital_sum = line_digital;
+            line_digital_sum = 0x00;
             run_mode_change_to( RUN_PRE_DIFFICULT );
         } else if ( dist_measure.measure() >= 1150 ) { // 1150mm走行で登頂一歩手前に来るはず(車体により誤差あり)
             dist_measure.restart();
@@ -893,11 +829,11 @@ void running_slope() {
         spdctrl_stable( speed_slope );
 
         // 難所判断
-        if ( run_judge_difficult( line_digital ) ) {
+        if ( ls.difficult() ) {
             // ここに来る場合は以下のいずれか。1はアナログで判断している関係上、比較的可能性が高いのでデジタルセンサを信じて難所処理する。
             // 1.坂道センサが誤検出した
             // 2.デジタルセンサが誤検出した
-            line_digital_sum = line_digital;
+            line_digital_sum = 0x00;
             run_mode_change_to( RUN_PRE_DIFFICULT );
         } else if ( dist_measure.measure() >= 500 ) {
             // ここに来るのは坂道誤判定だった場合
@@ -1122,15 +1058,15 @@ void failsafe() {
  */
 void timer_1ms_task( timer_callback_args_t* p_args ) {
     encoder();
+    sensors_update();
     angle_update();
-    line_sensor_update();
     servo_control();
     motor_control();
 
     if ( log_interval++ > 10 ) {
         char buf[256];
-        mini_snprintf( buf, 256, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", run_mode, run_status, line_error, steer_angle, line_digital, FL, FR,
-                       RL, RR, SV, speed, battery_voltage, slope_status, target_speed_now );
+        mini_snprintf( buf, 256, "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\n", run_mode, run_status, ls.line_error, steer_angle, ls.line_digital, FL,
+                       FR, RL, RR, SV, speed, battery_voltage, slope_status, target_speed_now );
 
         logger.put_log( buf );
         log_interval = 0;
@@ -1162,13 +1098,12 @@ void setup() {
     fsp_timer.start(); // APIのバグでopen()でstartされているが、APIが修正されたときにも動くようにするためにstart()を一応呼ぶ
 
     // テストモードのときはシェルを起動する
-    if ( COMMAND_TEST_MODE ) {
+    if ( CONFIG_COMMAND_TEST_MODE ) {
         test_mode_setup();
     }
 }
 
 void loop() {
-    sensors_update();
     target_speed_update();
     if ( run_mode == RUN_STOP || run_mode == RUN_TEST_MOTOR || run_mode == RUN_TEST_TRACE || run_mode == RUN_TEST_ANGLE ) {
         screen_exec();
@@ -1178,7 +1113,7 @@ void loop() {
     failsafe();
 
     // テストモードのときはシェルを実行する
-    if ( COMMAND_TEST_MODE ) {
+    if ( CONFIG_COMMAND_TEST_MODE ) {
         test_mode_main_task();
     }
 }

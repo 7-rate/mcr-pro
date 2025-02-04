@@ -33,8 +33,8 @@
 /***********************************/
 /* pin_hとpin_lは同じタイマチャンネルのピンを指定すること！ */
 /* さもなくば爆発します                                  */
-motor_driver::motor_driver( pin_size_t pin_h, pin_size_t pin_l, pin_size_t pin_phase, pin_size_t pin_sr )
-    : pin_h( pin_h ), pin_l( pin_l ), pin_phase( pin_phase ), pin_sr( pin_sr ), brake_mode( BRAKE ), pwm( 0 ), direction( FORWARD ),
+motor_driver::motor_driver( pin_size_t pin_h, pin_size_t pin_l, pin_size_t pin_phase, pin_size_t pin_sr, bool invert )
+    : pin_h( pin_h ), pin_l( pin_l ), pin_phase( pin_phase ), pin_sr( pin_sr ), invert( invert ), brake_mode( BRAKE ), pwm( 0 ), direction( FORWARD ),
       freq_hz( DEFAULT_FREQUENCY_HZ ) {
     auto pinconfig = getPinCfgs( pin_h, PIN_CFG_REQ_PWM );
     channel = GET_CHANNEL( pinconfig[0] );
@@ -87,6 +87,10 @@ void motor_driver::stop() {
  * 詳細：モーターのpwmを設定する
  */
 void motor_driver::set_pwm( s4 pwm ) {
+    if ( invert ) {
+        pwm = -pwm;
+    }
+
     if ( pwm == this->pwm ) {
         return;
     }

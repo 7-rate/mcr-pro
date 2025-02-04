@@ -22,7 +22,7 @@
 /***********************************/
 class motor_driver {
   public:
-    motor_driver( pin_size_t pin_h, pin_size_t pin_l, pin_size_t pin_phase, pin_size_t pin_sr );
+    motor_driver( pin_size_t pin_h, pin_size_t pin_l, pin_size_t pin_phase, pin_size_t pin_sr, bool invert = false );
     ~motor_driver();
 
     void begin();
@@ -46,6 +46,7 @@ class motor_driver {
     u4 freq_hz;           // hz
     u1 channel;           // GPT channel(0-7)
     u4 width_value;       // PWM width value[-]
+    bool invert;          // Invert output
 
     void freq_to_width_value( u4 freq_hz );
     void out_pwm( pin_size_t pin, s4 pwm );

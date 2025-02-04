@@ -8,6 +8,8 @@
 #include "calibration.h"
 #include "calc_utils.h"
 #include "sensors.h"
+#include "line_sensor.h"
+#include "features.h"
 
 /******************************************************************/
 /* Definitions                                                    */
@@ -47,11 +49,11 @@ static s4 iSensorBefore = 0;
 /* Global Variables                */
 /***********************************/
 // モーター定義
-motor_driver motor_FL( PIN_MOTOR_FL_PWMH, PIN_MOTOR_FL_PWML, PIN_MOTOR_FL_PHASE, PIN_MOTOR_FL_SR );
-motor_driver motor_FR( PIN_MOTOR_FR_PWMH, PIN_MOTOR_FR_PWML, PIN_MOTOR_FR_PHASE, PIN_MOTOR_FR_SR );
-motor_driver motor_RL( PIN_MOTOR_RL_PWMH, PIN_MOTOR_RL_PWML, PIN_MOTOR_RL_PHASE, PIN_MOTOR_RL_SR );
-motor_driver motor_RR( PIN_MOTOR_RR_PWMH, PIN_MOTOR_RR_PWML, PIN_MOTOR_RR_PHASE, PIN_MOTOR_RR_SR );
-motor_driver motor_SV( PIN_MOTOR_SV_PWMH, PIN_MOTOR_SV_PWML, PIN_MOTOR_SV_PHASE, PIN_MOTOR_SV_SR );
+motor_driver motor_FL( PIN_MOTOR_FL_PWMH, PIN_MOTOR_FL_PWML, PIN_MOTOR_FL_PHASE, PIN_MOTOR_FL_SR, CONFIG_MOTOR_FL_INVERT );
+motor_driver motor_FR( PIN_MOTOR_FR_PWMH, PIN_MOTOR_FR_PWML, PIN_MOTOR_FR_PHASE, PIN_MOTOR_FR_SR, CONFIG_MOTOR_FR_INVERT );
+motor_driver motor_RL( PIN_MOTOR_RL_PWMH, PIN_MOTOR_RL_PWML, PIN_MOTOR_RL_PHASE, PIN_MOTOR_RL_SR, CONFIG_MOTOR_RL_INVERT );
+motor_driver motor_RR( PIN_MOTOR_RR_PWMH, PIN_MOTOR_RR_PWML, PIN_MOTOR_RR_PHASE, PIN_MOTOR_RR_SR, CONFIG_MOTOR_RR_INVERT );
+motor_driver motor_SV( PIN_MOTOR_SV_PWMH, PIN_MOTOR_SV_PWML, PIN_MOTOR_SV_PHASE, PIN_MOTOR_SV_SR, CONFIG_MOTOR_SV_INVERT );
 
 s2 FL; // FLモーターのpwm指令値
 s2 FR; // FRモーターのpwm指令値
@@ -98,7 +100,7 @@ void set_servo_mode( servo_mode_t mode, s4 param1, s4 param2, s4 param3 ) {
         if ( servo_mode_old != LINE_TRACE || servo_ctrl_line_trace_offset != servo_ctrl_line_trace_offset_old ) {
             servo_ctrl_line_error_sum = 0;
             servo_ctrl_line_trace_offset_old = servo_ctrl_line_trace_offset;
-            servo_ctrl_line_error_old = line_error;
+            servo_ctrl_line_error_old = ls.line_error;
         }
         break;
     case INTELI_ANGLE_CTRL:
@@ -151,16 +153,16 @@ void servo_control() {
     s4 i, iD, iP, iRet;
 
     switch ( servo_mode ) {
-    case LINE_TRACE:
+    case LINE_TRACE: {
         // ライントレース制御
         s4 line_error_diff;
+        s4 le = ls.line_error;
         kp = prm_line_trace_P.get();
         ki = prm_line_trace_I.get();
         kd = prm_line_trace_D.get();
 
         target = 0 + servo_ctrl_line_trace_offset;
-        line_error *= -1;
-        error = target - line_error; // line_errorは-1024～1023
+        error = target - le; // line_errorは-1024～1023
         servo_ctrl_line_error_sum += error;
         servo_ctrl_line_error_sum = constrain( servo_ctrl_line_error_sum, -1024, 1023 );
         line_error_diff = error - servo_ctrl_line_error_old;
@@ -179,7 +181,8 @@ void servo_control() {
         pwm = out_p + out_i + out_d;
         servo_ctrl_line_error_old = error;
         break;
-    case INTELI_ANGLE_CTRL:
+    }
+    case INTELI_ANGLE_CTRL: {
         // 角度制御
         s4 angle_error_diff;
         kp = prm_angle_ctrl_P.get();
@@ -202,6 +205,7 @@ void servo_control() {
         pwm = out_p + out_i + out_d;
         servo_ctrl_angle_old = steer_angle;
         break;
+    }
     case MANUAL_CTRL:
         // マニュアル制御
         pwm = servo_target_pwm;

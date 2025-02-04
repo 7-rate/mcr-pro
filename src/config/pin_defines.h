@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <FastLED.h>
+#include "features.h"
 
 /***********************************/
 /* Pin Defines                     */
@@ -51,6 +52,7 @@
 // Sens_5:D41
 // Sens_6:D42
 // Sens_7:A3
+#if defined( CONFIG_LINE_SENSOR_D5A2 )
 // #define PIN_LINE_DIGITAL_CENTER ( D35 )
 // #define PIN_LINE_DIGITAL_8 ( D36 )
 // #define PIN_LINE_DIGITAL_4 ( D38 )
@@ -59,7 +61,7 @@
 // #define PIN_LINE_ANALOG_RIGHT ( D41 )
 // #define PIN_LINE_DIGITAL_2 ( D42 )
 // #define PIN_LINE_DIGITAL_1 ( A3 )
-
+#elif defined( CONFIG_LINE_SENSOR_STEALTH )
 #define PIN_LINE_AR3 ( D35 )
 #define PIN_LINE_AR2 ( D36 )
 #define PIN_LINE_AR1 ( D38 )
@@ -67,6 +69,9 @@
 #define PIN_LINE_AL1 ( D40 )
 #define PIN_LINE_AL2 ( D41 )
 #define PIN_LINE_AL3 ( D42 )
+#else
+#error "ラインセンサーが選択されていません。センサーを選択してfeatures.hから有効にしてください。"
+#endif
 
 // 電力センサ
 #define PIN_BATT_VOLTAGE ( D63 )

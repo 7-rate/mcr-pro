@@ -103,7 +103,6 @@ git clone https://github.com/7-rate/dj-mcr-ra4m1.git
 /* Global functions                */
 /***********************************/
 
-
 /***********************************/
 /* Global Variables                */
 /***********************************/
