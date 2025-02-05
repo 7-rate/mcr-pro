@@ -612,6 +612,11 @@ void display_sensor_calibration() {
     display_draw_str( 0, ROW_7, "%4d %4d", stealth->al2->corrected(), stealth->al2->raw );
     display_draw_str( 0, ROW_8, "%4d %4d", stealth->al3->corrected(), stealth->al3->raw );
     display_draw_str( 0, ROW_10, " %4d", ls.line_error );
+#elif defined( CONFIG_LINE_SENSOR_D5A2 )
+    display_draw_str( COL_ITEM, ROW_2, "L" );
+    display_draw_str( COL_ITEM, ROW_3, " %4d", line_left_raw );
+    display_draw_str( COL_ITEM, ROW_4, "R" );
+    display_draw_str( COL_ITEM, ROW_5, " %4d", line_right_raw );
 #endif
 
     if ( sensor_calibration_status == CALIBRATION_W ) {
@@ -647,6 +652,9 @@ void display_sensor_calibration() {
                 prm_line_AL1_W = stealth->al1->get();
                 prm_line_AL2_W = stealth->al2->get();
                 prm_line_AL3_W = stealth->al3->get();
+#elif defined( CONFIG_LINE_SENSOR_D5A2 )
+                prm_line_trace_left_W = line_left_raw;
+                prm_line_trace_right_W = line_right_raw;
 #endif
 
                 sensor_calibration_status = CALIBRATION_B;
@@ -660,6 +668,9 @@ void display_sensor_calibration() {
                 prm_line_AL1_B = stealth->al1->get();
                 prm_line_AL2_B = stealth->al2->get();
                 prm_line_AL3_B = stealth->al3->get();
+#elif defined( CONFIG_LINE_SENSOR_D5A2 )
+                prm_line_trace_left_B = line_left_raw;
+                prm_line_trace_right_B = line_right_raw;
 #endif
                 sensor_calibration_status = CALIBRATION_SAVE;
                 break;
