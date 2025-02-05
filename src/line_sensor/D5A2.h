@@ -280,7 +280,7 @@ class line_sensor_d5a2 : public line_sensor {
         return ( line_digital & 0x16 );
     }
 
-  private:
+  public:
     bool gate;
     u4 line_left_raw;  // アナログセンサーの左側の生値 10bitADCの値 LSB:1[-]
     u4 line_right_raw; // アナログセンサーの右側の生値 10bitADCの値 LSB:1[-]
