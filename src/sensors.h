@@ -22,13 +22,11 @@
 /***********************************/
 /* Global functions                */
 /***********************************/
-extern void angle_update();
-extern void encoder();
 extern void button_screen_update();
 extern void encoder_reset();
 extern void sensors_init();
-extern void sensors_update();
-extern void line_sensor_update();
+extern void sensors_update_period();
+extern void sensors_update_interrupt();
 
 /***********************************/
 /* Global Variables                */

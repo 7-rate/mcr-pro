@@ -95,12 +95,14 @@ static void battery_update() {
  * 詳細：ディップスイッチを更新する
  */
 static void dip_switch_update() {
+    noInterrupts();
     dip_switch.bit.sw1 = !my_digital_read( PIN_DIPSW_1 );
     dip_switch.bit.sw2 = !my_digital_read( PIN_DIPSW_2 );
     dip_switch.bit.sw3 = !my_digital_read( PIN_DIPSW_3 );
     dip_switch.bit.sw4 = !my_digital_read( PIN_DIPSW_4 );
     dip_switch.bit.board_sw1 = !my_digital_read( PIN_BOARD_DIPSW_1 );
     dip_switch.bit.board_sw2 = !my_digital_read( PIN_BOARD_DIPSW_2 );
+    interrupts();
 }
 
 /*
@@ -142,22 +144,6 @@ static void centrifugal_force_update() {
     centrifugal_force = temp;
     interrupts();
 }
-
-/***********************************/
-/* Global functions                */
-/***********************************/
-/*
- * 概要：ステアリング角度を更新する
- * 引数：なし
- * 戻り値：なし
- * 詳細：ステアリング角度を更新する
- */
-void angle_update() {
-    s2 servo_pulse_cnt = (s2)GPT7_CNT;
-    steer_angle = ( (s4)servo_pulse_cnt * 3600 ) / ( ANGLE_PULSE * CAR_STEER_GEAR_RATIO / 10 );
-    steer_angle = -steer_angle;
-}
-
 /*
  * 概要：エンコーダの更新
  * 引数：なし
@@ -165,8 +151,7 @@ void angle_update() {
  * 詳細：エンコーダの値を更新する
  * 備考：1ms周期で呼び出すこと
  */
-void encoder() {
-    noInterrupts();
+static void encoder_update() {
     encoder_pulse_1ms = (s2)GPT6_CNT;
     R_GPT6->GTCR_b.CST = 0;
     GPT6_CNT = 0;
@@ -176,9 +161,23 @@ void encoder() {
     speed = speed_raw;
     distance_10um += speed;
     distance = distance_10um / 100;
-    interrupts();
 }
 
+/*
+ * 概要：ステアリング角度を更新する
+ * 引数：なし
+ * 戻り値：なし
+ * 詳細：ステアリング角度を更新する
+ */
+static void angle_update() {
+    s2 servo_pulse_cnt = (s2)GPT7_CNT;
+    steer_angle = ( (s4)servo_pulse_cnt * 3600 ) / ( ANGLE_PULSE * CAR_STEER_GEAR_RATIO / 10 );
+    steer_angle = -steer_angle;
+}
+
+/***********************************/
+/* Global functions                */
+/***********************************/
 /*
  * 概要：エンコーダの値をリセットする
  * 引数：なし
@@ -242,13 +241,24 @@ void sensors_init() {
  * 概要：センサーの更新
  * 引数：なし
  * 戻り値：なし
- * 詳細：センサーの更新
+ * 詳細：メインタスク
  */
-void sensors_update() {
-    ls.update();
+void sensors_update_period() {
     slope_update();
     battery_update();
     dip_switch_update();
     button_update();
     centrifugal_force_update();
+}
+
+/*
+ * 概要：センサーの更新
+ * 引数：なし
+ * 戻り値：なし
+ * 詳細：1ms周期割り込みタスク
+ */
+void sensors_update_interrupt() {
+    ls.update();
+    encoder_update();
+    angle_update();
 }

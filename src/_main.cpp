@@ -68,14 +68,15 @@ mcr_logger logger;
 s4 log_interval;
 s4 target_speed_now;
 
-/*********************************************************/
-/* Global Variables                                      */
-/*********************************************************/
 // ブザー関連
 buzzer bz( PIN_BUZZER );
 
 // failer
 u4 failer = 0x00;
+
+/*********************************************************/
+/* Global Variables                                      */
+/*********************************************************/
 
 /******************************************************************/
 /* Implementation                                                 */
@@ -1057,9 +1058,7 @@ void failsafe() {
  * 備考：割り込みコンテキストで実行される
  */
 void timer_1ms_task( timer_callback_args_t* p_args ) {
-    encoder();
-    sensors_update();
-    angle_update();
+    sensors_update_interrupt();
     servo_control();
     motor_control();
 
@@ -1105,6 +1104,7 @@ void setup() {
 
 void loop() {
     target_speed_update();
+    sensors_update_period();
     if ( run_mode == RUN_STOP || run_mode == RUN_TEST_MOTOR || run_mode == RUN_TEST_TRACE || run_mode == RUN_TEST_ANGLE ) {
         screen_exec();
     }
